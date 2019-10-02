@@ -9,386 +9,396 @@ package com.jiahuan.svgmapview.core.helper.map;
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+
 /**
  * Parses numbers from SVG text. Based on the Batik Number Parser (Apache 2 License).
- * 
+ *
  * @author Apache Software Foundation, Larva Labs LLC
  */
 public class ParserHelper {
 
-	private final char[] s;
-	private final int n;
-	private char current;
-	public int pos;
+    /**
+     * Array of powers of ten. Using double instead of float gives a tiny bit more precision.
+     */
+    private static final double[] pow10 = new double[128];
 
-	public ParserHelper(String str, int pos) {
-		try {
-			this.s = str.toCharArray();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		this.pos = pos;
-		n = s.length;
-		current = s[pos];
-	}
+    static {
+        for (int i = 0; i < pow10.length; i++) {
+            pow10[i] = Math.pow(10, i);
+        }
+    }
 
-	private char read() {
-		if (pos < n) {
-			pos++;
-		}
-		if (pos == n) {
-			return '\0';
-		} else {
-			return s[pos];
-		}
-	}
+    private final char[] s;
+    private final int n;
+    public int pos;
+    private char current;
 
-	public void skipWhitespace() {
-		while (pos < n) {
-			if (Character.isWhitespace(s[pos])) {
-				advance();
-			} else {
-				break;
-			}
-		}
-	}
+    public ParserHelper(String str, int pos) {
+        try {
+            this.s = str.toCharArray();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        this.pos = pos;
+        n = s.length;
+        current = s[pos];
+    }
 
-	public void skipNumberSeparator() {
-		while (pos < n) {
-			char c = s[pos];
-			switch (c) {
-			case ' ':
-			case ',':
-			case '\n':
-			case '\t':
-				advance();
-				break;
-			default:
-				return;
-			}
-		}
-	}
+    /**
+     * Computes a float from mantissa and exponent.
+     */
+    public static float buildFloat(int mant, int exp) {
+        if (exp < -125 || mant == 0) {
+            return 0.0f;
+        }
 
-	public void advance() {
-		current = read();
-	}
+        if (exp >= 128) {
+            return (mant > 0) ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
+        }
 
-	/**
-	 * Parses the content of the buffer and converts it to a float.
-	 */
-	public float parseFloat() {
-		int mant = 0;
-		int mantDig = 0;
-		boolean mantPos = true;
-		boolean mantRead = false;
+        if (exp == 0) {
+            return mant;
+        }
 
-		int exp = 0;
-		int expDig = 0;
-		int expAdj = 0;
-		boolean expPos = true;
+        if (mant >= (1 << 26)) {
+            mant++; // round up trailing bits if they will be dropped.
+        }
 
-		switch (current) {
-		case '-':
-			mantPos = false;
-			// fallthrough
-		case '+':
-			current = read();
-		}
+        return (float) ((exp > 0) ? mant * pow10[exp] : mant / pow10[-exp]);
+    }
 
-		m1: switch (current) {
-		default:
-			return Float.NaN;
+    private char read() {
+        if (pos < n) {
+            pos++;
+        }
+        if (pos == n) {
+            return '\0';
+        } else {
+            return s[pos];
+        }
+    }
 
-		case '.':
-			break;
+    public void skipWhitespace() {
+        while (pos < n) {
+            if (Character.isWhitespace(s[pos])) {
+                advance();
+            } else {
+                break;
+            }
+        }
+    }
 
-		case '0':
-			mantRead = true;
-			l: for (;;) {
-				current = read();
-				switch (current) {
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					break l;
-				case '.':
-				case 'e':
-				case 'E':
-					break m1;
-				default:
-					return 0.0f;
-				case '0':
-				}
-			}
+    public void skipNumberSeparator() {
+        while (pos < n) {
+            char c = s[pos];
+            switch (c) {
+                case ' ':
+                case ',':
+                case '\n':
+                case '\t':
+                    advance();
+                    break;
+                default:
+                    return;
+            }
+        }
+    }
 
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			mantRead = true;
-			l: for (;;) {
-				if (mantDig < 9) {
-					mantDig++;
-					mant = mant * 10 + (current - '0');
-				} else {
-					expAdj++;
-				}
-				current = read();
-				switch (current) {
-				default:
-					break l;
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-				}
-			}
-		}
+    public void advance() {
+        current = read();
+    }
 
-		if (current == '.') {
-			current = read();
-			m2: switch (current) {
-			default:
-			case 'e':
-			case 'E':
-				if (!mantRead) {
-					reportUnexpectedCharacterError(current);
-					return 0.0f;
-				}
-				break;
+    /**
+     * Parses the content of the buffer and converts it to a float.
+     */
+    public float parseFloat() {
+        int mant = 0;
+        int mantDig = 0;
+        boolean mantPos = true;
+        boolean mantRead = false;
 
-			case '0':
-				if (mantDig == 0) {
-					l: for (;;) {
-						current = read();
-						expAdj--;
-						switch (current) {
-						case '1':
-						case '2':
-						case '3':
-						case '4':
-						case '5':
-						case '6':
-						case '7':
-						case '8':
-						case '9':
-							break l;
-						default:
-							if (!mantRead) {
-								return 0.0f;
-							}
-							break m2;
-						case '0':
-						}
-					}
-				}
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-				l: for (;;) {
-					if (mantDig < 9) {
-						mantDig++;
-						mant = mant * 10 + (current - '0');
-						expAdj--;
-					}
-					current = read();
-					switch (current) {
-					default:
-						break l;
-					case '0':
-					case '1':
-					case '2':
-					case '3':
-					case '4':
-					case '5':
-					case '6':
-					case '7':
-					case '8':
-					case '9':
-					}
-				}
-			}
-		}
+        int exp = 0;
+        int expDig = 0;
+        int expAdj = 0;
+        boolean expPos = true;
 
-		switch (current) {
-		case 'e':
-		case 'E':
-			current = read();
-			switch (current) {
-			default:
-				reportUnexpectedCharacterError(current);
-				return 0f;
-			case '-':
-				expPos = false;
-			case '+':
-				current = read();
-				switch (current) {
-				default:
-					reportUnexpectedCharacterError(current);
-					return 0f;
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-				}
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-			}
+        switch (current) {
+            case '-':
+                mantPos = false;
+                // fallthrough
+            case '+':
+                current = read();
+        }
 
-			en: switch (current) {
-			case '0':
-				l: for (;;) {
-					current = read();
-					switch (current) {
-					case '1':
-					case '2':
-					case '3':
-					case '4':
-					case '5':
-					case '6':
-					case '7':
-					case '8':
-					case '9':
-						break l;
-					default:
-						break en;
-					case '0':
-					}
-				}
+        m1:
+        switch (current) {
+            default:
+                return Float.NaN;
 
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-				l: for (;;) {
-					if (expDig < 3) {
-						expDig++;
-						exp = exp * 10 + (current - '0');
-					}
-					current = read();
-					switch (current) {
-					default:
-						break l;
-					case '0':
-					case '1':
-					case '2':
-					case '3':
-					case '4':
-					case '5':
-					case '6':
-					case '7':
-					case '8':
-					case '9':
-					}
-				}
-			}
-		default:
-		}
+            case '.':
+                break;
 
-		if (!expPos) {
-			exp = -exp;
-		}
-		exp += expAdj;
-		if (!mantPos) {
-			mant = -mant;
-		}
+            case '0':
+                mantRead = true;
+                l:
+                for (; ; ) {
+                    current = read();
+                    switch (current) {
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case '8':
+                        case '9':
+                            break l;
+                        case '.':
+                        case 'e':
+                        case 'E':
+                            break m1;
+                        default:
+                            return 0.0f;
+                        case '0':
+                    }
+                }
 
-		return buildFloat(mant, exp);
-	}
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                mantRead = true;
+                l:
+                for (; ; ) {
+                    if (mantDig < 9) {
+                        mantDig++;
+                        mant = mant * 10 + (current - '0');
+                    } else {
+                        expAdj++;
+                    }
+                    current = read();
+                    switch (current) {
+                        default:
+                            break l;
+                        case '0':
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case '8':
+                        case '9':
+                    }
+                }
+        }
 
-	private void reportUnexpectedCharacterError(char c) {
-		throw new RuntimeException("Unexpected char '" + c + "'.");
-	}
+        if (current == '.') {
+            current = read();
+            m2:
+            switch (current) {
+                default:
+                case 'e':
+                case 'E':
+                    if (!mantRead) {
+                        reportUnexpectedCharacterError(current);
+                        return 0.0f;
+                    }
+                    break;
 
-	/**
-	 * Computes a float from mantissa and exponent.
-	 */
-	public static float buildFloat(int mant, int exp) {
-		if (exp < -125 || mant == 0) {
-			return 0.0f;
-		}
+                case '0':
+                    if (mantDig == 0) {
+                        l:
+                        for (; ; ) {
+                            current = read();
+                            expAdj--;
+                            switch (current) {
+                                case '1':
+                                case '2':
+                                case '3':
+                                case '4':
+                                case '5':
+                                case '6':
+                                case '7':
+                                case '8':
+                                case '9':
+                                    break l;
+                                default:
+                                    if (!mantRead) {
+                                        return 0.0f;
+                                    }
+                                    break m2;
+                                case '0':
+                            }
+                        }
+                    }
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    l:
+                    for (; ; ) {
+                        if (mantDig < 9) {
+                            mantDig++;
+                            mant = mant * 10 + (current - '0');
+                            expAdj--;
+                        }
+                        current = read();
+                        switch (current) {
+                            default:
+                                break l;
+                            case '0':
+                            case '1':
+                            case '2':
+                            case '3':
+                            case '4':
+                            case '5':
+                            case '6':
+                            case '7':
+                            case '8':
+                            case '9':
+                        }
+                    }
+            }
+        }
 
-		if (exp >= 128) {
-			return (mant > 0) ? Float.POSITIVE_INFINITY : Float.NEGATIVE_INFINITY;
-		}
+        switch (current) {
+            case 'e':
+            case 'E':
+                current = read();
+                switch (current) {
+                    default:
+                        reportUnexpectedCharacterError(current);
+                        return 0f;
+                    case '-':
+                        expPos = false;
+                    case '+':
+                        current = read();
+                        switch (current) {
+                            default:
+                                reportUnexpectedCharacterError(current);
+                                return 0f;
+                            case '0':
+                            case '1':
+                            case '2':
+                            case '3':
+                            case '4':
+                            case '5':
+                            case '6':
+                            case '7':
+                            case '8':
+                            case '9':
+                        }
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                }
 
-		if (exp == 0) {
-			return mant;
-		}
+                en:
+                switch (current) {
+                    case '0':
+                        l:
+                        for (; ; ) {
+                            current = read();
+                            switch (current) {
+                                case '1':
+                                case '2':
+                                case '3':
+                                case '4':
+                                case '5':
+                                case '6':
+                                case '7':
+                                case '8':
+                                case '9':
+                                    break l;
+                                default:
+                                    break en;
+                                case '0':
+                            }
+                        }
 
-		if (mant >= (1 << 26)) {
-			mant++; // round up trailing bits if they will be dropped.
-		}
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        l:
+                        for (; ; ) {
+                            if (expDig < 3) {
+                                expDig++;
+                                exp = exp * 10 + (current - '0');
+                            }
+                            current = read();
+                            switch (current) {
+                                default:
+                                    break l;
+                                case '0':
+                                case '1':
+                                case '2':
+                                case '3':
+                                case '4':
+                                case '5':
+                                case '6':
+                                case '7':
+                                case '8':
+                                case '9':
+                            }
+                        }
+                }
+            default:
+        }
 
-		return (float) ((exp > 0) ? mant * pow10[exp] : mant / pow10[-exp]);
-	}
+        if (!expPos) {
+            exp = -exp;
+        }
+        exp += expAdj;
+        if (!mantPos) {
+            mant = -mant;
+        }
 
-	/**
-	 * Array of powers of ten. Using double instead of float gives a tiny bit more precision.
-	 */
-	private static final double[] pow10 = new double[128];
+        return buildFloat(mant, exp);
+    }
 
-	static {
-		for (int i = 0; i < pow10.length; i++) {
-			pow10[i] = Math.pow(10, i);
-		}
-	}
+    private void reportUnexpectedCharacterError(char c) {
+        throw new RuntimeException("Unexpected char '" + c + "'.");
+    }
 
-	public float nextFloat() {
-		skipWhitespace();
-		float f = parseFloat();
-		skipNumberSeparator();
-		return f;
-	}
+    public float nextFloat() {
+        skipWhitespace();
+        float f = parseFloat();
+        skipNumberSeparator();
+        return f;
+    }
 
-	public int nextFlag() {
-		skipWhitespace();
-		int flag = current - '0';
-		current = read();
-		skipNumberSeparator();
-		return flag;
-	}
+    public int nextFlag() {
+        skipWhitespace();
+        int flag = current - '0';
+        current = read();
+        skipNumberSeparator();
+        return flag;
+    }
 
 }

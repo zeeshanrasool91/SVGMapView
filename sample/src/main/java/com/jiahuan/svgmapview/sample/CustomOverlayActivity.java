@@ -1,19 +1,17 @@
 package com.jiahuan.svgmapview.sample;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.PointF;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.jiahuan.svgmapview.SVGMapView;
 import com.jiahuan.svgmapview.SVGMapViewListener;
-import com.jiahuan.svgmapview.overlay.SVGMapLocationOverlay;
 import com.jiahuan.svgmapview.sample.helper.AssetsHelper;
 import com.jiahuan.svgmapview.sample.overlay.BitmapOverlay;
 
 
-public class CustomOverlayActivity extends ActionBarActivity
+public class CustomOverlayActivity extends AppCompatActivity
 {
     private SVGMapView mapView;
 

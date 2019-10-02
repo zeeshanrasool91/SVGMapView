@@ -9,8 +9,7 @@ import android.view.MotionEvent;
 
 import com.jiahuan.svgmapview.overlay.SVGMapBaseOverlay;
 
-public class SparkOverlay extends SVGMapBaseOverlay
-{
+public class SparkOverlay extends SVGMapBaseOverlay {
     private static final float STEP = 2f;
     private static final long delayTime = 40;
     //
@@ -25,13 +24,11 @@ public class SparkOverlay extends SVGMapBaseOverlay
     private int currentAlpha = 255;
     private DrawThread drawThread = new DrawThread();
 
-    public SparkOverlay(MapMainView mapMainView, float radius, PointF centerPoint, int color, int repeatTimes)
-    {
+    public SparkOverlay(MapMainView mapMainView, float radius, PointF centerPoint, int color, int repeatTimes) {
         initLayer(mapMainView, radius, centerPoint, color, repeatTimes);
     }
 
-    private void initLayer(MapMainView mapMainView, float radius, PointF centerPoint, int color, int repeatTimes)
-    {
+    private void initLayer(MapMainView mapMainView, float radius, PointF centerPoint, int color, int repeatTimes) {
         this.totalRadius = radius;
         this.currentAlpha = color >>> 24;
         this.alphaStep = (int) (currentAlpha / (this.totalRadius / STEP));
@@ -46,78 +43,61 @@ public class SparkOverlay extends SVGMapBaseOverlay
         drawThread.start();
     }
 
-    private class DrawThread extends Thread
-    {
+    @Override
+    public void onDestroy() {
+    }
+
+    @Override
+    public void onPause() {
+
+    }
+
+    @Override
+    public void onResume() {
+        if (!drawThread.isAlive()) {
+            new DrawThread().start();
+        }
+    }
+
+    @Override
+    public void onTap(MotionEvent event) {
+
+    }
+
+    @Override
+    public void draw(Canvas canvas, Matrix matrix, float currentZoomValue, float currentRotateDegrees) {
+        canvas.save();
+        if (isVisible) {
+            canvas.setMatrix(matrix);
+            canvas.drawCircle(this.centerPoint.x, this.centerPoint.y, this.currentRadius, this.paint);
+        }
+        canvas.restore();
+    }
+
+    private class DrawThread extends Thread {
         @Override
-        public void run()
-        {
+        public void run() {
             super.run();
-            while (currentRepeatTime != repeatTimes)
-            {
-                if (currentRepeatTime < repeatTimes)
-                {
-                    if (currentRadius >= totalRadius)
-                    {
+            while (currentRepeatTime != repeatTimes) {
+                if (currentRepeatTime < repeatTimes) {
+                    if (currentRadius >= totalRadius) {
                         currentRadius = 0;
                         currentRepeatTime++;
-                    }
-                    else
-                    {
+                    } else {
                         currentRadius += STEP;
                         currentAlpha -= alphaStep;
                         paint.setAlpha(currentAlpha);
                         mapMainView.refresh();
                     }
                 }
-                try
-                {
+                try {
                     Thread.sleep(delayTime);
-                }
-                catch (InterruptedException e)
-                {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
             mapMainView.getOverLays().remove(SparkOverlay.this);
         }
-    }
-
-    @Override
-    public void onDestroy()
-    {
-    }
-
-    @Override
-    public void onPause()
-    {
-
-    }
-
-    @Override
-    public void onResume()
-    {
-        if (!drawThread.isAlive())
-        {
-            new DrawThread().start();
-        }
-    }
-
-    @Override
-    public void onTap(MotionEvent event)
-    {
-
-    }
-
-    @Override
-    public void draw(Canvas canvas, Matrix matrix, float currentZoomValue, float currentRotateDegrees)
-    {
-        canvas.save();
-        if (isVisible)
-        {
-            canvas.setMatrix(matrix);
-            canvas.drawCircle(this.centerPoint.x, this.centerPoint.y, this.currentRadius, this.paint);
-        }
-        canvas.restore();
     }
 
 }

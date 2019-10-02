@@ -11,8 +11,7 @@ import android.view.MotionEvent;
 
 import com.jiahuan.svgmapview.SVGMapView;
 
-public class SVGMapLocationOverlay extends SVGMapBaseOverlay
-{
+public class SVGMapLocationOverlay extends SVGMapBaseOverlay {
     // Model
     public static final int MODE_NORMAL = 0;
     public static final int MODE_COMPASS = 1;
@@ -45,13 +44,11 @@ public class SVGMapLocationOverlay extends SVGMapBaseOverlay
     private PointF currentPosition = null;
     private int currentMode = MODE_NORMAL;
 
-    public SVGMapLocationOverlay(SVGMapView svgMapView)
-    {
+    public SVGMapLocationOverlay(SVGMapView svgMapView) {
         initLayer(svgMapView);
     }
 
-    private void initLayer(SVGMapView svgMapView)
-    {
+    private void initLayer(SVGMapView svgMapView) {
         this.showLevel = LOCATION_LEVEL;
         //
         locationPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -86,101 +83,80 @@ public class SVGMapLocationOverlay extends SVGMapBaseOverlay
         indicatorArcPaint.setStrokeWidth(compassArcWidth);
     }
 
-    public void setIndicatorArrowBitmap(Bitmap bitmap)
-    {
+    public void setIndicatorArrowBitmap(Bitmap bitmap) {
         this.compassIndicatorArrowBitmap = bitmap;
     }
 
-    public void setMode(int mode)
-    {
+    public void setMode(int mode) {
         this.currentMode = mode;
     }
 
 
-    public PointF getPosition()
-    {
+    public PointF getPosition() {
         return currentPosition;
     }
 
-    public void setPosition(PointF position)
-    {
+    public void setPosition(PointF position) {
         this.currentPosition = position;
     }
 
-    public void setIndicatorArrowRotateDegree(float degree)
-    {
+    public void setIndicatorArrowRotateDegree(float degree) {
         this.compassIndicatorArrowRotateDegree = degree % 360;
     }
 
-    public void setIndicatorCircleRotateDegree(float degree)
-    {
+    public void setIndicatorCircleRotateDegree(float degree) {
         this.compassIndicatorCircleRotateDegree = degree % 360;
     }
 
     @Override
-    public void onDestroy()
-    {
+    public void onDestroy() {
 
     }
 
     @Override
-    public void onPause()
-    {
+    public void onPause() {
 
     }
 
     @Override
-    public void onResume()
-    {
+    public void onResume() {
 
     }
 
     @Override
-    public void onTap(MotionEvent event)
-    {
+    public void onTap(MotionEvent event) {
 
     }
 
     @Override
-    public void draw(Canvas canvas, Matrix matrix, float currentZoom, float currentRotateDegrees)
-    {
+    public void draw(Canvas canvas, Matrix matrix, float currentZoom, float currentRotateDegrees) {
         canvas.save();
-        if (this.isVisible && this.currentPosition != null)
-        {
+        if (this.isVisible && this.currentPosition != null) {
             float goal[] = {currentPosition.x, currentPosition.y};
             matrix.mapPoints(goal);
 
             canvas.drawCircle(goal[0], goal[1], defaultLocationCircleRadius, locationPaint);
 
-            if (currentMode == MODE_COMPASS)
-            {
-                for (int i = 0; i < 360 / COMPASS_DELTA_ANGLE; i++)
-                {
+            if (currentMode == MODE_COMPASS) {
+                for (int i = 0; i < 360 / COMPASS_DELTA_ANGLE; i++) {
                     canvas.save();
                     canvas.rotate(COMPASS_DELTA_ANGLE * i, goal[0], goal[1]);
-                    if (i % (90 / COMPASS_DELTA_ANGLE) == 0)
-                    {
+                    if (i % (90 / COMPASS_DELTA_ANGLE) == 0) {
                         canvas.drawLine(goal[0], goal[1] - compassRadius + compassLocationCircleRadius, goal[0], goal[1] - compassRadius + compassLocationCircleRadius - compassLineLength, compassLinePaint);
-                    }
-                    else
-                    {
+                    } else {
                         canvas.drawCircle(goal[0], goal[1] - compassRadius, compassLocationCircleRadius, new Paint());
                     }
                     canvas.restore();
                 }
-                if (compassIndicatorArrowBitmap != null)
-                {
+                if (compassIndicatorArrowBitmap != null) {
                     canvas.save();
                     canvas.rotate(this.compassIndicatorArrowRotateDegree, goal[0], goal[1]);
                     canvas.drawBitmap(compassIndicatorArrowBitmap, goal[0] - compassIndicatorArrowBitmap.getWidth() / 2, goal[1] - defaultLocationCircleRadius - compassIndicatorGap, new Paint());
                     canvas.restore();
-                    if (360 - (this.compassIndicatorArrowRotateDegree - this.compassIndicatorCircleRotateDegree) > 180)
-                    {
+                    if (360 - (this.compassIndicatorArrowRotateDegree - this.compassIndicatorCircleRotateDegree) > 180) {
                         canvas.drawArc(new RectF(goal[0] - compassRadius, goal[1] - compassRadius, goal[0] + compassRadius, goal[1] + compassRadius), -90 + this.compassIndicatorCircleRotateDegree, (this.compassIndicatorArrowRotateDegree - this.compassIndicatorCircleRotateDegree), false,
                                 indicatorArcPaint);
-                    }
-                    else
-                    {
+                    } else {
                         canvas.drawArc(new RectF(goal[0] - compassRadius, goal[1] - compassRadius, goal[0] + compassRadius, goal[1] + compassRadius), -90 + this.compassIndicatorArrowRotateDegree, 360 - (this.compassIndicatorArrowRotateDegree - this.compassIndicatorCircleRotateDegree), false,
                                 indicatorArcPaint);
                     }

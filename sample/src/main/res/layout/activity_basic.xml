@@ -1,6 +1,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <com.jiahuan.svgmapview.SVGMapView
         android:id="@+id/basic_mapview"
@@ -8,7 +8,6 @@
         android:layout_height="match_parent">
 
     </com.jiahuan.svgmapview.SVGMapView>
-
 
 
 </RelativeLayout>

@@ -16,33 +16,29 @@ import com.jiahuan.svgmapview.overlay.SVGMapBaseOverlay;
 import java.util.List;
 
 
-public class SVGMapView extends FrameLayout
-{
+public class SVGMapView extends FrameLayout {
     private MapMainView mapMainView;
 
     private SVGMapController mapController;
 
     private ImageView brandImageView;
 
-    public SVGMapView(Context context)
-    {
+    public SVGMapView(Context context) {
         this(context, null);
     }
 
-    public SVGMapView(Context context, AttributeSet attrs)
-    {
+    public SVGMapView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public SVGMapView(Context context, AttributeSet attrs, int defStyle)
-    {
+    public SVGMapView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         mapMainView = new MapMainView(context, attrs, defStyle);
         addView(mapMainView);
         brandImageView = new ImageView(context, attrs, defStyle);
         brandImageView.setScaleType(ScaleType.FIT_START);
         LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 15, context.getResources().getDisplayMetrics()));
-        params.gravity = Gravity.BOTTOM | Gravity.LEFT;
+        params.gravity = Gravity.BOTTOM | Gravity.START;
         params.leftMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, context.getResources().getDisplayMetrics());
         params.bottomMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, context.getResources().getDisplayMetrics());
         addView(brandImageView, params);
@@ -51,22 +47,18 @@ public class SVGMapView extends FrameLayout
     /**
      * @return the map controller.
      */
-    public SVGMapController getController()
-    {
-        if (this.mapController == null)
-        {
+    public SVGMapController getController() {
+        if (this.mapController == null) {
             this.mapController = new SVGMapController(this);
         }
         return this.mapController;
     }
 
-    public void registerMapViewListener(SVGMapViewListener idrMapViewListener)
-    {
+    public void registerMapViewListener(SVGMapViewListener idrMapViewListener) {
         this.mapMainView.registeMapViewListener(idrMapViewListener);
     }
 
-    public void loadMap(String svgString)
-    {
+    public void loadMap(String svgString) {
         this.mapMainView.loadMap(svgString);
     }
 
@@ -74,16 +66,14 @@ public class SVGMapView extends FrameLayout
         this.brandImageView.setImageBitmap(bitmap);
     }
 
-    public void refresh()
-    {
+    public void refresh() {
         this.mapMainView.refresh();
     }
 
     /**
      * @return whether the map is already loaded.
      */
-    public boolean isMapLoadFinsh()
-    {
+    public boolean isMapLoadFinsh() {
         return this.mapMainView.isMapLoadFinsh();
     }
 
@@ -91,60 +81,49 @@ public class SVGMapView extends FrameLayout
      * get the current map.
      * It will be callback in the map listener of 'onGetCurrentMap'
      */
-    public void getCurrentMap()
-    {
+    public void getCurrentMap() {
         this.mapMainView.getCurrentMap();
     }
 
 
-    public float getCurrentRotateDegrees()
-    {
+    public float getCurrentRotateDegrees() {
         return this.mapMainView.getCurrentRotateDegrees();
     }
 
 
-    public float getCurrentZoomValue()
-    {
+    public float getCurrentZoomValue() {
         return this.mapMainView.getCurrentZoomValue();
     }
 
 
-    public float getMaxZoomValue()
-    {
+    public float getMaxZoomValue() {
         return this.mapMainView.getMaxZoomValue();
     }
 
 
-    public float getMinZoomValue()
-    {
+    public float getMinZoomValue() {
         return this.mapMainView.getMinZoomValue();
     }
 
 
-    public float[] getMapCoordinateWithScreenCoordinate(float screenX, float screenY)
-    {
+    public float[] getMapCoordinateWithScreenCoordinate(float screenX, float screenY) {
         return this.mapMainView.getMapCoordinateWithScreenCoordinate(screenX, screenY);
     }
 
-    public List<SVGMapBaseOverlay> getOverLays()
-    {
+    public List<SVGMapBaseOverlay> getOverLays() {
         return this.mapMainView.getOverLays();
     }
 
 
-
-    public void onDestroy()
-    {
+    public void onDestroy() {
         this.mapMainView.onDestroy();
     }
 
-    public void onPause()
-    {
+    public void onPause() {
         this.mapMainView.onPause();
     }
 
-    public void onResume()
-    {
+    public void onResume() {
         this.mapMainView.onResume();
     }
 
